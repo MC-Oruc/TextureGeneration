@@ -1,0 +1,22 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0.0",
+  "FriendlyName": "Texture Generation",
+  "Description": "Reusable Unreal Editor Python tools for deterministic texture generation and import.",
+  "Category": "Editor",
+  "CreatedBy": "MC-Oruc",
+  "CanContainContent": true,
+  "EnabledByDefault": true,
+  "Installed": false,
+  "Plugins": [
+    {
+      "Name": "PythonScriptPlugin",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
+      "Enabled": true
+    }
+  ]
+}
