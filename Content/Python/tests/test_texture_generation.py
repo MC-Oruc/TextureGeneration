@@ -40,6 +40,17 @@ class WaterSurfaceTests(unittest.TestCase):
         for expected, actual in zip(start, v_end):
             self.assertAlmostEqual(expected, actual, places=10)
 
+    def test_macro_modes_are_balanced_counter_wave_pairs(self) -> None:
+        settings = WaterSurfaceSettings(seed=401)
+        modes = generate_modes(settings)
+        macro_modes = modes[: settings.macro_mode_count]
+        for forward, counter in zip(macro_modes[::2], macro_modes[1::2]):
+            self.assertEqual(forward.cycles_x, counter.cycles_x)
+            self.assertEqual(forward.cycles_y, counter.cycles_y)
+            self.assertEqual(forward.temporal_cycles, -counter.temporal_cycles)
+            self.assertEqual(forward.spatial_phase, counter.spatial_phase)
+            self.assertEqual(forward.temporal_phase, counter.temporal_phase)
+
     def test_small_atlas_and_tga_output(self) -> None:
         settings = WaterSurfaceSettings(
             frame_resolution=12,

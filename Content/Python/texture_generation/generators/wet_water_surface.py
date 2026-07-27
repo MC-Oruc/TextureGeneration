@@ -19,15 +19,15 @@ class WaterSurfaceSettings:
     macro_mode_count: int = 6
     macro_min_wavelength_cm: float = 55.0
     macro_max_wavelength_cm: float = 90.0
-    macro_height_amplitude_cm: float = 0.28
+    macro_height_amplitude_cm: float = 0.20
     micro_mode_count: int = 12
     micro_min_wavelength_cm: float = 12.0
     micro_max_wavelength_cm: float = 30.0
-    micro_height_amplitude_cm: float = 0.055
+    micro_height_amplitude_cm: float = 0.035
     wind_direction_degrees: float = 28.0
-    macro_direction_spread_degrees: float = 22.0
-    micro_direction_spread_degrees: float = 70.0
-    reflection_strength: float = 0.28
+    macro_direction_spread_degrees: float = 55.0
+    micro_direction_spread_degrees: float = 100.0
+    macro_counter_wave_strength: float = 1.0
     normal_strength: float = 1.0
     water_depth_cm: float = 0.7
     seed: int = 104729
@@ -58,6 +58,7 @@ def _append_band(
     minimum_temporal_cycles: int,
     maximum_temporal_cycles: int,
     direction_spread_degrees: float,
+    balanced_counter_waves: bool = False,
 ) -> None:
     minimum_cycles = max(1, math.ceil(settings.tile_size_cm / maximum_wavelength_cm))
     maximum_cycles = max(
@@ -67,12 +68,11 @@ def _append_band(
     first_mode = len(modes)
     weight_squared_sum = 0.0
 
-    for mode_index in range(mode_count):
-        reflected = mode_index > 0 and mode_index % 4 == 3
+    source_mode_count = mode_count // 2 if balanced_counter_waves else mode_count
+    for _ in range(source_mode_count):
         direction_degrees = (
             settings.wind_direction_degrees
             + rng.uniform(-direction_spread_degrees, direction_spread_degrees)
-            + (180.0 if reflected else 0.0)
         )
         direction = math.radians(direction_degrees)
         requested_magnitude = rng.uniform(minimum_cycles, maximum_cycles)
@@ -96,19 +96,31 @@ def _append_band(
         )
 
         amplitude = rng.uniform(0.75, 1.25) / math.sqrt(max(magnitude, 1.0))
-        if reflected:
-            amplitude *= settings.reflection_strength
-        modes.append(
-            WaveMode(
-                cycles_x=cycles_x,
-                cycles_y=cycles_y,
-                temporal_cycles=temporal_cycles,
-                amplitude_cm=amplitude,
-                spatial_phase=rng.uniform(0.0, TAU),
-                temporal_phase=rng.uniform(0.0, TAU),
-            )
+        spatial_phase = rng.uniform(0.0, TAU)
+        temporal_phase = rng.uniform(0.0, TAU)
+        mode = WaveMode(
+            cycles_x=cycles_x,
+            cycles_y=cycles_y,
+            temporal_cycles=temporal_cycles,
+            amplitude_cm=amplitude,
+            spatial_phase=spatial_phase,
+            temporal_phase=temporal_phase,
         )
+        modes.append(mode)
         weight_squared_sum += amplitude * amplitude
+        if balanced_counter_waves:
+            counter_amplitude = amplitude * settings.macro_counter_wave_strength
+            modes.append(
+                WaveMode(
+                    cycles_x=cycles_x,
+                    cycles_y=cycles_y,
+                    temporal_cycles=-temporal_cycles,
+                    amplitude_cm=counter_amplitude,
+                    spatial_phase=spatial_phase,
+                    temporal_phase=temporal_phase,
+                )
+            )
+            weight_squared_sum += counter_amplitude * counter_amplitude
 
     amplitude_scale = height_amplitude_cm / math.sqrt(max(weight_squared_sum, 1.0e-8))
     for mode in modes[first_mode:]:
@@ -130,6 +142,7 @@ def generate_modes(settings: WaterSurfaceSettings) -> list[WaveMode]:
         1,
         1,
         settings.macro_direction_spread_degrees,
+        balanced_counter_waves=True,
     )
     _append_band(
         modes,
@@ -189,6 +202,10 @@ def _validate_settings(settings: WaterSurfaceSettings) -> None:
         raise ValueError("Tile size and cycle duration must be positive.")
     if settings.macro_mode_count < 2 or settings.micro_mode_count < 2:
         raise ValueError("Each wave band requires at least two modes.")
+    if settings.macro_mode_count % 2 != 0:
+        raise ValueError("Macro wave mode count must be even for balanced counter waves.")
+    if not 0.0 <= settings.macro_counter_wave_strength <= 1.0:
+        raise ValueError("Macro counter-wave strength must be between zero and one.")
 
 
 def generate(

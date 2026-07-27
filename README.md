@@ -33,7 +33,8 @@ import texture_generation; texture_generation.run("wet_water_surface", "/Game/Ge
 
 Available generators:
 
-- `wet_water_surface`: looping BC5 water-surface normal atlas.
+- `wet_water_surface`: looping BC5 water-surface normal atlas with balanced
+  macro oscillation and lightweight traveling micro detail.
 - `wet_ripple_impacts`: two BC7 atlases with puddle normal in RG and wet-film
   normal in BA.
 
