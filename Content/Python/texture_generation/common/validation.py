@@ -20,9 +20,23 @@ def validate_outputs(outputs: Sequence[TextureOutput]) -> None:
             raise ValueError(f"Duplicate output asset name: {output.asset_name}")
         if output.width <= 0 or output.height <= 0:
             raise ValueError(f"{output.asset_name} has invalid dimensions.")
-        expected_bytes = output.width * output.height * 4
-        if len(output.rgba8) != expected_bytes:
+
+        has_rgba8 = output.rgba8 is not None
+        has_encoded = output.encoded_bytes is not None
+        if has_rgba8 == has_encoded:
             raise ValueError(
-                f"{output.asset_name} has {len(output.rgba8)} bytes; expected {expected_bytes}."
+                f"{output.asset_name} must provide exactly one source payload."
+            )
+
+        if has_rgba8:
+            expected_bytes = output.width * output.height * 4
+            if len(output.rgba8) != expected_bytes:
+                raise ValueError(
+                    f"{output.asset_name} has {len(output.rgba8)} bytes; "
+                    f"expected {expected_bytes}."
+                )
+        elif not output.source_extension.startswith("."):
+            raise ValueError(
+                f"{output.asset_name} source extension must start with a dot."
             )
         names.add(output.asset_name)

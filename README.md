@@ -37,6 +37,9 @@ Available generators:
   macro oscillation and lightweight traveling micro detail.
 - `wet_ripple_impacts`: two BC7 atlases with puddle normal in RG and wet-film
   normal in BA.
+- `wet_city_reflection`: project-source equirectangular panorama converted into
+  a seam-safe Radiance HDR cubemap source with controlled emissive range and
+  softly balanced horizontal city-light energy.
 
 Or generate source files without importing:
 
@@ -54,6 +57,8 @@ content path.
 - `common/` owns validation, source-image writing, and Unreal import/save logic.
 - `generators/` owns texture-specific math, packing, names, and import settings.
 - A generator returns one or more `TextureOutput` values. There is no recipe DSL.
+- `TextureOutput` supports raw RGBA8/TGA or generator-owned encoded source data
+  such as Radiance HDR.
 
 Adding a texture type means adding one generator module. Shared import code does
 not change.

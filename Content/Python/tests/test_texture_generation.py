@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from texture_generation.common.image_writer import write_tga
+from texture_generation.common.image_writer import encode_radiance_hdr, write_tga
 from texture_generation.generators.wet_water_surface import (
     WaterSurfaceSettings,
     evaluate_normal,
@@ -14,6 +14,12 @@ from texture_generation.generators.wet_water_surface import (
 from texture_generation.generators.wet_ripple_impacts import (
     RippleImpactSettings,
     generate as generate_impacts,
+)
+from texture_generation.generators.wet_city_reflection import (
+    WetCityReflectionSettings,
+    _balance_horizontal_light_energy,
+    _orient_for_unreal_cubemap,
+    _spread_horizon_lights,
 )
 from texture_generation.common.models import GenerationContext
 
@@ -85,6 +91,85 @@ class WaterSurfaceTests(unittest.TestCase):
         )
         self.assertNotEqual(outputs[0].rgba8, outputs[1].rgba8)
         self.assertEqual(len(outputs[0].rgba8), 24 * 24 * 4)
+
+    def test_radiance_hdr_output_uses_scanline_rle(self) -> None:
+        width = 257
+        height = 2
+        row = [
+            (
+                0.05 + index / width,
+                0.10 + (index % 17) / 17,
+                0.20 + (index % 31) / 31,
+            )
+            for index in range(width)
+        ]
+        encoded = encode_radiance_hdr(width, height, [row, row])
+        self.assertIn(b"FORMAT=32-bit_rle_rgbe", encoded)
+        resolution = b"-Y 2 +X 257\n"
+        cursor = encoded.index(resolution) + len(resolution)
+
+        for _row in range(height):
+            self.assertEqual(encoded[cursor : cursor + 4], bytes((2, 2, 1, 1)))
+            cursor += 4
+            for _channel in range(4):
+                decoded_width = 0
+                while decoded_width < width:
+                    packet = encoded[cursor]
+                    cursor += 1
+                    if packet > 128:
+                        decoded_width += packet - 128
+                        cursor += 1
+                    else:
+                        decoded_width += packet
+                        cursor += packet
+                self.assertEqual(decoded_width, width)
+        self.assertEqual(cursor, len(encoded))
+
+    def test_city_reflection_balances_dim_horizontal_sectors(self) -> None:
+        width = 32
+        height = 16
+        pixels = bytearray(width * height * 4)
+        for index in range(3, len(pixels), 4):
+            pixels[index] = 255
+        for y in range(4, 12):
+            for x in range(0, 4):
+                index = (y * width + x) * 4
+                pixels[index : index + 3] = bytes((220, 180, 120))
+            for x in range(16, 20):
+                index = (y * width + x) * 4
+                pixels[index : index + 3] = bytes((80, 70, 60))
+
+        spread = _spread_horizon_lights(
+            pixels,
+            width,
+            height,
+            WetCityReflectionSettings(),
+        )
+        balanced = _balance_horizontal_light_energy(
+            spread,
+            width,
+            height,
+            WetCityReflectionSettings(),
+        )
+        bright_before = sum(pixels[(y * width + x) * 4] for y in range(4, 12) for x in range(4))
+        bright_after = sum(balanced[(y * width + x) * 4] for y in range(4, 12) for x in range(4))
+        dim_before = sum(pixels[(y * width + x) * 4] for y in range(4, 12) for x in range(16, 20))
+        dim_after = sum(balanced[(y * width + x) * 4] for y in range(4, 12) for x in range(16, 20))
+
+        self.assertGreater(dim_after, dim_before)
+        self.assertLessEqual(bright_after, bright_before * 1.15)
+        self.assertGreater(
+            dim_after / dim_before,
+            bright_after / bright_before,
+        )
+
+    def test_city_reflection_matches_unreal_vertical_orientation(self) -> None:
+        top = bytes((255, 0, 0, 255, 0, 255, 0, 255))
+        bottom = bytes((0, 0, 255, 255, 255, 255, 255, 255))
+
+        oriented = _orient_for_unreal_cubemap(bytearray(top + bottom), 2, 2)
+
+        self.assertEqual(oriented, bytearray(bottom + top))
 
 
 if __name__ == "__main__":

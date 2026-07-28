@@ -15,5 +15,7 @@ class TextureOutput:
     asset_name: str
     width: int
     height: int
-    rgba8: bytes | bytearray
+    rgba8: bytes | bytearray | None = None
     texture_settings: Mapping[str, object] = field(default_factory=dict)
+    encoded_bytes: bytes | bytearray | None = None
+    source_extension: str = ".tga"

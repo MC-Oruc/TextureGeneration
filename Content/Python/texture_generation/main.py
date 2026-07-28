@@ -41,8 +41,12 @@ def generate_only(
 
     written: list[tuple[TextureOutput, Path]] = []
     for output in outputs:
-        source_path = root / f"{output.asset_name}.tga"
-        write_tga(source_path, output.width, output.height, output.rgba8)
+        source_path = root / f"{output.asset_name}{output.source_extension}"
+        if output.encoded_bytes is not None:
+            source_path.parent.mkdir(parents=True, exist_ok=True)
+            source_path.write_bytes(output.encoded_bytes)
+        else:
+            write_tga(source_path, output.width, output.height, output.rgba8)
         written.append((output, source_path))
     return written
 
