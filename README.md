@@ -37,9 +37,10 @@ Available generators:
   macro oscillation and lightweight traveling micro detail.
 - `wet_ripple_impacts`: two BC7 atlases with puddle normal in RG and wet-film
   normal in BA.
-- `wet_city_reflection`: project-source equirectangular panorama converted into
-  a seam-safe Radiance HDR cubemap source with controlled emissive range and
-  softly balanced horizontal city-light energy.
+- `wet_city_reflection`: bundled equirectangular panorama converted into a
+  seam-safe Radiance HDR cubemap source with controlled emissive range and
+  softly balanced horizontal city-light energy. The default source lives at
+  `SourceArt/Environment/WetSurface/WetCityReflection_Source.tga`.
 
 Or generate source files without importing:
 

@@ -17,6 +17,7 @@ from texture_generation.generators.wet_ripple_impacts import (
 )
 from texture_generation.generators.wet_city_reflection import (
     WetCityReflectionSettings,
+    _default_source_image,
     _balance_horizontal_light_energy,
     _orient_for_unreal_cubemap,
     _spread_horizon_lights,
@@ -170,6 +171,12 @@ class WaterSurfaceTests(unittest.TestCase):
         oriented = _orient_for_unreal_cubemap(bytearray(top + bottom), 2, 2)
 
         self.assertEqual(oriented, bytearray(bottom + top))
+
+    def test_city_reflection_default_source_is_bundled_with_plugin(self) -> None:
+        source = _default_source_image()
+
+        self.assertTrue(source.is_file())
+        self.assertEqual(source.parts[-4:], ("SourceArt", "Environment", "WetSurface", source.name))
 
 
 if __name__ == "__main__":

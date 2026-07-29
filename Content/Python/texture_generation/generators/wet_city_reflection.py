@@ -31,12 +31,14 @@ class WetCityReflectionSettings:
 
 
 def _default_source_image() -> Path:
-    relative = Path("SourceArt/Environment/WetSurface/WetCityReflection_Source.tga")
-    try:
-        import unreal
-    except ImportError:
-        return Path.cwd() / relative
-    return Path(unreal.Paths.convert_relative_path_to_full(unreal.Paths.project_dir())) / relative
+    plugin_root = Path(__file__).resolve().parents[4]
+    return (
+        plugin_root
+        / "SourceArt"
+        / "Environment"
+        / "WetSurface"
+        / "WetCityReflection_Source.tga"
+    )
 
 
 def _srgb_to_linear(value: int) -> float:
