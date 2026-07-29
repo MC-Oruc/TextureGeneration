@@ -37,6 +37,8 @@ Available generators:
   macro oscillation and lightweight traveling micro detail.
 - `wet_ripple_impacts`: two BC7 atlases with puddle normal in RG and wet-film
   normal in BA.
+- `wet_surface_fields`: one BC7 packed field texture with two puddle-noise
+  channels in RG and sparse glint placement data in BA.
 - `wet_city_reflection`: bundled equirectangular panorama converted into a
   seam-safe Radiance HDR cubemap source with controlled emissive range and
   softly balanced horizontal city-light energy. The default source lives at
