@@ -43,6 +43,8 @@ Available generators:
   seam-safe Radiance HDR cubemap source with controlled emissive range and
   softly balanced horizontal city-light energy. The default source lives at
   `SourceArt/Environment/WetSurface/WetCityReflection_Source.tga`.
+- `wet_neutral_surface_defaults`: canonical 4x4 solid neutral BaseColor,
+  tangent Normal, and ORM defaults for shared wet-surface materials.
 
 Or generate source files without importing:
 

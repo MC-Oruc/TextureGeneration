@@ -22,6 +22,9 @@ from texture_generation.generators.wet_city_reflection import (
     _orient_for_unreal_cubemap,
     _spread_horizon_lights,
 )
+from texture_generation.generators.wet_neutral_surface_defaults import (
+    generate as generate_neutral_defaults,
+)
 from texture_generation.common.models import GenerationContext
 
 
@@ -177,6 +180,34 @@ class WaterSurfaceTests(unittest.TestCase):
 
         self.assertTrue(source.is_file())
         self.assertEqual(source.parts[-4:], ("SourceArt", "Environment", "WetSurface", source.name))
+
+
+class WetNeutralSurfaceDefaultsTests(unittest.TestCase):
+    def test_outputs_are_canonical_solid_defaults(self) -> None:
+        outputs = generate_neutral_defaults(GenerationContext(Path(".")))
+        expected = {
+            "T_WetDefault_BaseColor": (255, 255, 255, 255),
+            "T_WetDefault_Normal": (128, 128, 255, 255),
+            "T_WetDefault_ORM": (255, 128, 0, 255),
+        }
+        self.assertEqual([output.asset_name for output in outputs], list(expected))
+
+        for output in outputs:
+            self.assertEqual((output.width, output.height), (4, 4))
+            payload = bytes(expected[output.asset_name]) * 16
+            self.assertEqual(output.rgba8, payload)
+            self.assertEqual(output.rgba8[:4], payload[:4])
+            self.assertEqual(output.rgba8[-4:], payload[-4:])
+
+        base, normal, orm = outputs
+        self.assertTrue(base.texture_settings["srgb"])
+        self.assertEqual(base.texture_settings["compression_settings"][1], "TC_DEFAULT")
+        self.assertFalse(normal.texture_settings["srgb"])
+        self.assertTrue(normal.texture_settings["compression_no_alpha"])
+        self.assertEqual(normal.texture_settings["compression_settings"][1], "TC_NORMALMAP")
+        self.assertFalse(orm.texture_settings["srgb"])
+        self.assertTrue(orm.texture_settings["compression_no_alpha"])
+        self.assertEqual(orm.texture_settings["compression_settings"][1], "TC_MASKS")
 
 
 if __name__ == "__main__":
