@@ -1,5 +1,8 @@
 # Texture Generation
 
+[![Unreal Engine 5.7](https://img.shields.io/badge/Unreal%20Engine-5.7-blue.svg)](https://www.unrealengine.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Reusable Unreal Editor Python tools for deterministic texture generation and import.
 
 The plugin is content-only. It requires no project C++ module and no rebuild when
